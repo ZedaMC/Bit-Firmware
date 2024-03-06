@@ -24,6 +24,7 @@
 #include <esp_sleep.h>
 #include <Util/stdafx.h>
 #include "JigHWTest/JigHWTest.h"
+#include "src/Test3D/Test3D.h"
 
 BacklightBrightness* bl;
 
@@ -107,6 +108,20 @@ void init(){
 	auto disp = new Display();
 	Services.set(Service::Display, disp);
 
+	auto input = new Input(true);
+	Services.set(Service::Input, input);
+
+	bl->fadeIn();
+
+	auto test = new Test3D(*disp);
+	uint64_t time = micros();
+	for(;;){
+		const auto timeNow = micros();
+		test->loop((float) (timeNow - time) / 1000000);
+		time = timeNow;
+		vTaskDelay(1);
+	}
+
 	disp->getLGFX().drawBmpFile("/spiffs/Splash.bmp", 36, 11);
 	bl->fadeIn();
 	auto splashStart = millis();
@@ -114,9 +129,6 @@ void init(){
 	auto buzzPwm = new PWM(PIN_BUZZ, LEDC_CHANNEL_0);
 	auto audio = new ChirpSystem(*buzzPwm);
 	Services.set(Service::Audio, audio);
-
-	auto input = new Input(true);
-	Services.set(Service::Input, input);
 
 	auto sleep = new Sleep();
 
