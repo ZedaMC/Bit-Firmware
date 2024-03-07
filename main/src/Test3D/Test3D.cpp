@@ -7,7 +7,7 @@ Test3D::Test3D(Display& display) : display(display), canvas(display.getCanvas())
 		const auto asset = Assets[i];
 		auto& data = assetData[i];
 
-		data.resize(96*96*2, 0);
+		data.resize(asset.dim.x*asset.dim.y*2, 0);
 		auto file = fopen(asset.path, "r");
 		fread(data.data(), 1, asset.dim.x*asset.dim.y*2, file);
 		fclose(file);
@@ -23,6 +23,24 @@ Test3D::Test3D(Display& display) : display(display), canvas(display.getCanvas())
 void Test3D::loop(float dt){
 	if(dt == 0) return;
 
+	movement(dt);
+	calcView();
+	renderGround();
+	renderBillboards();
+
+	// Framerate display
+	const float fps = 1.0f / dt;
+	char fpstext[32];
+	sprintf(fpstext, "%.1f", fps);
+
+	canvas.setCursor(2, 2);
+	canvas.write(fpstext);
+
+	// Push to display
+	canvas.pushSprite(0, 0);
+}
+
+void Test3D::movement(float dt){
 	Event evt {};
 	if(evts.get(evt, 0)){
 		const auto data = (Input::Data*) evt.data;
@@ -57,24 +75,27 @@ void Test3D::loop(float dt){
 		rotUD = 89;
 	}
 
-	glm::vec3 forward(1, 0, 0);
+	forward = { 1, 0, 0 };
 	forward = glm::rotateY(forward, glm::radians(-rotUD)); // Rotation is limited to [-89, 89] deg (above) - disregard gimbal lock
 	forward = glm::rotateZ(forward, glm::radians(rotZ));
-	// After rotations, the vector should remain normalized (disregarding fp rounding errors)
+	// After rotations, the forward vector should remain normalized (disregarding fp rounding errors)
 
 	camPos += forward * spd * dt;
+}
 
+void Test3D::calcView(){
 	const auto view = glm::lookAt(camPos, camPos + forward, Up);
-	const glm::mat4 vpMat = Proj * view;
-	const glm::mat4 vpInv = glm::inverse(vpMat);
+	vpMat = Proj * view;
+	vpInv = glm::inverse(vpMat);
+}
+
+void IRAM_ATTR Test3D::renderGround(){
+	canvas.clear(TFT_BLACK);
+
+	if(camPos.z < 0.01f) return; // Camera is below the ground plane
 
 	for(int x = 0; x < 128; x++){
 		for(int y = 0; y < 128; y++){
-			if(camPos.z < 0.01f){
-				canvas.drawPixel(x, y, TFT_BLACK);
-				continue;
-			}
-
 			// The magic number is 1/127 -- multiplication is faster than division. This optimisation alone yields ~10% faster rendering
 			const float posX = ((float) x * 0.007874016f) * 2.0f - 1.0f;
 			const float posY = ((float) y * 0.007874016f) * 2.0f - 1.0f;
@@ -82,48 +103,79 @@ void Test3D::loop(float dt){
 			const glm::vec4 screenPos = glm::vec4(posX, -posY, 1.0f, 1.0f);
 			const glm::vec4 worldPos = vpInv * screenPos;
 
-			const glm::vec3 ray = glm::normalize(glm::vec3(worldPos));
+			// Should be normalized or at the very least divided by worldPos.w -- omitted for optimization
+			const glm::vec3 ray = glm::vec3(worldPos);
 
 			const float t = - camPos.z / ray.z;
-			if(t < 0){
-				canvas.drawPixel(x, y, TFT_BLACK);
-				continue;
-			}
+			if(t < 0) continue; // Behind camera
+			if(t > 10) continue; // Front limit, adjust empirically
 
 			// x/y coords on the z=0 plane (world space)
 			const float planeX = t * ray.x + camPos.x;
 			const float planeY = t * ray.y + camPos.y;
 
-			const auto c = getColor(planeX, planeY);
+			const auto c = sampleGround(planeX, planeY);
 			canvas.drawPixel(x, y, c);
 		}
 	}
-
-	// Billboards
-	for(int i = 0; i < Count(Boards); i++){
-		const auto board = Boards[i];
-		const auto asset = Assets[board.index];
-
-		const glm::vec4 originH = glm::vec4(board.pos, 0, 1.0f);
-		const auto screenPos = vpMat * originH;
-		const auto screenCoords = glm::vec3(screenPos / screenPos.w) * glm::vec3(64, 64, 1.0f) + glm::vec3(64, 64, 0.0f);
-
-		canvas.pushImage(screenCoords.x, -screenCoords.y, asset.dim.x, asset.dim.y, assetData[board.index].data());
-	}
-
-	// Framerate display
-	const float fps = 1.0f / dt;
-	char fpstext[32];
-	sprintf(fpstext, "%.1f", fps);
-
-	canvas.setCursor(2, 2);
-	canvas.write(fpstext);
-
-	// Push to display
-	canvas.pushSprite(0, 0);
 }
 
-uint16_t Test3D::getColor(float planeX, float planeY){
+void IRAM_ATTR Test3D::renderBillboards(){
+	const glm::vec3 fw2 = glm::rotateZ(glm::vec3(1.0f, 0, 0), glm::radians(rotZ)); // Forward vector disregarding up/down rotation
+	const auto Right = glm::cross(Up, fw2); // Right vector in world-space according to camera view
+
+	struct DrawInfo {
+		glm::vec2 pos;
+		float scale;
+		int index;
+		float distance;
+	};
+	std::vector<DrawInfo> draws;
+	draws.reserve(Count(Boards));
+
+	for(int i = 0; i < Count(Boards); i++){
+		const auto& board = Boards[i];
+		const auto& asset = Assets[board.index];
+
+		const glm::vec3 origin(board.pos, 0);
+
+		// Projecting the origin onto the forward vector. T indicates where the projected origin lies on the vector
+		const glm::vec3 B = origin - camPos;
+		const float t = glm::dot(B, forward);
+		if(t < 0) continue; // Behind camera
+		if(t > 10) continue; // Front limit, adjust empirically
+
+		const glm::vec4 originH = glm::vec4(origin, 1.0f);
+		const auto screenPos = vpMat * originH;
+		auto screenCoords = (glm::vec2(screenPos) / screenPos.w) * glm::vec2(64, 64) + glm::vec2(64, -64);
+
+		const glm::vec4 posB = originH + glm::vec4(Right, 0);
+		const auto screenPosB = vpMat * posB;
+		const float scale = (screenPos.x / screenPos.w - screenPosB.x / screenPosB.w) * board.scale;
+
+		screenCoords.x -= (float) asset.dim.x * 0.5f * scale;
+		screenCoords.y += (float) asset.dim.y * scale;
+
+		screenCoords.y = -screenCoords.y;
+
+		draws.push_back(DrawInfo {
+				.pos = screenCoords,
+				.scale = scale,
+				.index = board.index,
+				.distance = t
+		});
+	}
+
+	std::sort(draws.begin(), draws.end(), [](const DrawInfo& a, const DrawInfo& b){ return a.distance > b.distance; });
+
+	for(const auto& draw : draws){
+		const auto& asset = Assets[draw.index];
+		const auto& data = assetData[draw.index];
+		canvas.pushImageRotateZoom(draw.pos.x, draw.pos.y, 0, 0, 0, draw.scale, draw.scale, asset.dim.x, asset.dim.y, (uint16_t*) data.data(), TFT_TRANSPARENT);
+	}
+}
+
+uint16_t IRAM_ATTR Test3D::sampleGround(float planeX, float planeY){
 	/**
 	 * The ground plane is from x/y [-2, -2] to [2, 2] and is divided into a 4x4 grid. It
 	 * uses sprites from the spritemap according to the Field structure. This function gets
@@ -131,17 +183,19 @@ uint16_t Test3D::getColor(float planeX, float planeY){
 	 * Pixels that are outside [-2, 2] on either x or y are black. Other pixels sample the spritemap.
 	 */
 
-	if(planeX > 2 || planeX < -2 || planeY > 2 || planeY < -2) return TFT_BLACK;
+	// im pretty sure this code is wrong, but the end result looks acceptable for testing
+
+	if(planeX >= 2 || planeX < -2 || planeY >= 2 || planeY < -2) return TFT_BLACK;
 
 	planeX = planeX + 2.0f;
 	planeY = planeY + 2.0f;
-	if(planeX >= 4) planeX = 3.99f;
-	if(planeY >= 4) planeY = 3.99f;
+	const int planeXfloor = planeX; // opt: var should be float, value should be floored
+	const int planeYfloor = planeY; // opt: var should be float, value should be floored
 
-	const int spriteIndex = Field[(int) std::floor(planeY)][(int) std::floor(planeX)];
+	const int spriteIndex = Field[(int) planeYfloor][(int) planeXfloor];
 
 	// Location of sprite inside sprite-sheet [3x3]
-	const int spriteY = spriteIndex / 3;
+	const int spriteY = spriteIndex * 0.3333f;
 	const int spriteX = spriteIndex - spriteY * 3;
 
 	// Start pixel coords of needed sprite inside sprite-sheet [96x96]
@@ -149,11 +203,11 @@ uint16_t Test3D::getColor(float planeX, float planeY){
 	const int spriteStartY = spriteY * 32;
 
 	// Pixel pos inside needed sprite [0x1]
-	const float pixelX = planeX - std::floor(planeX);
-	const float pixelY = planeY - std::floor(planeY);
+	const float pixelX = planeX - (float) planeXfloor;
+	const float pixelY = planeY - (float) planeYfloor;
 	// Pixel pos inside needed sprite [32x32]
-	const int spritePixelX = std::floor(pixelX * 32.0f);
-	const int spritePixelY = std::floor(pixelY * 32.0f);
+	const int spritePixelX = pixelX * 32.0f; // opt: value should be floored
+	const int spritePixelY = pixelY * 32.0f; // opt: value should be floored
 
 	const int index = (spriteStartX + spritePixelX) + (spriteStartY + spritePixelY) * 96;
 

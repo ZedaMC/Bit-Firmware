@@ -20,13 +20,13 @@ private:
 
 	EventQueue evts;
 
-	static constexpr glm::vec3 Up = { 0, 0, 1 };
+	static constexpr DRAM_ATTR glm::vec3 Up = { 0, 0, 1 };
 	const glm::mat4 Proj;
 
 	/**
 	 * Spritesheet is 96x96 and contains 3x3 sprites, each 32x32 pixels
 	 */
-	static constexpr int Field[4][4] = {
+	static constexpr DRAM_ATTR int Field[4][4] = {
 			{ 0, 1, 1, 2 },
 			{ 3, 4, 4, 5 },
 			{ 3, 4, 5, 5 },
@@ -37,7 +37,7 @@ private:
 		const char* path;
 		glm::vec<2, int> dim;
 	};
-	static constexpr Asset Assets[] = {
+	static constexpr DRAM_ATTR Asset Assets[] = {
 			{ "/spiffs/spritesheet.raw", { 96, 96 } },
 			{ "/spiffs/bush.raw", { 28, 20 } },
 			{ "/spiffs/light.raw", { 18, 88 } }
@@ -49,10 +49,54 @@ private:
 		glm::vec2 pos;
 		float scale;
 	};
-	static constexpr BB Boards[] = {
-			{ 1, { 0, 0 }, 0.1 },
-			{ 2, { 0.5f, 1.0f }, 0.1 },
-			{ 2, { 1.0f, -0.3f }, 0.1 }
+	static constexpr BB DRAM_ATTR Boards[] = {
+			{ 1, { -1.0f, 0.33f }, 1 },
+			{ 1, { -1.4f, 0.8f }, 1 },
+			{ 1, { -1.3f, 0.3f }, 1 },
+			{ 1, { -0.8f, 1.5f }, 1 },
+			{ 1, { -0.7f, 1.2f }, 1 },
+			{ 1, { -0.3f, 1.2f }, 1 },
+			{ 1, { -0.4f, 0.8f }, 1 },
+
+			{ 1, { 0.5f, 0.25f }, 1 },
+			{ 1, { 0.6f, 0.5f }, 1 },
+			{ 1, { 0.7f, 0.75f }, 1 },
+
+			{ 2, { 1.0f, -2.0f }, 1 },
+			{ 2, { 1.0f, -1.75f }, 1 },
+			{ 2, { 1.0f, -1.5f }, 1 },
+			{ 2, { 1.0f, -1.25f }, 1 },
+			{ 2, { 1.0f, -1.0f }, 1 },
+			{ 2, { 1.0f, -0.75f }, 1 },
+			{ 2, { 1.0f, -0.5f }, 1 },
+			{ 2, { 1.0f, -0.25f }, 1 },
+			{ 2, { 1.0f, -0.0f }, 1 },
+			{ 2, { 1.0f, 2.0f }, 1 },
+			{ 2, { 1.0f, 1.75f }, 1 },
+			{ 2, { 1.0f, 1.5f }, 1 },
+			{ 2, { 1.0f, 1.25f }, 1 },
+			{ 2, { 1.0f, 1.0f }, 1 },
+			{ 2, { 1.0f, 0.75f }, 1 },
+			{ 2, { 1.0f, 0.5f }, 1 },
+			{ 2, { 1.0f, 0.25f }, 1 },
+
+			{ 2, { 0.0f, -2.0f }, 1 },
+			{ 2, { 0.0f, -1.75f }, 1 },
+			{ 2, { 0.0f, -1.5f }, 1 },
+			{ 2, { 0.0f, -1.25f }, 1 },
+			{ 2, { 0.0f, -1.0f }, 1 },
+			{ 2, { 0.0f, -0.75f }, 1 },
+			{ 2, { 0.0f, -0.5f }, 1 },
+			{ 2, { 0.0f, -0.25f }, 1 },
+			{ 2, { 0.0f, -0.0f }, 1 },
+			{ 2, { 0.0f, 2.0f }, 1 },
+			{ 2, { 0.0f, 1.75f }, 1 },
+			{ 2, { 0.0f, 1.5f }, 1 },
+			{ 2, { 0.0f, 1.25f }, 1 },
+			{ 2, { 0.0f, 1.0f }, 1 },
+			{ 2, { 0.0f, 0.75f }, 1 },
+			{ 2, { 0.0f, 0.5f }, 1 },
+			{ 2, { 0.0f, 0.25f }, 1 },
 	};
 
 	glm::vec3 camPos = { 0, -0.5f, 2.2f };
@@ -63,7 +107,16 @@ private:
 	float spdUD = 0; // Up/down
 	float spdZ = 0; // Left/right
 
-	uint16_t getColor(float planeX, float planeY);
+	// Per frame
+	glm::vec3 forward;
+	glm::mat4 vpMat; // view-projection matrix
+	glm::mat4 vpInv; // inverted view-projection matrix
+
+	void movement(float dt);
+	void calcView();
+	void renderGround();
+	void renderBillboards();
+	uint16_t sampleGround(float planeX, float planeY);
 
 };
 
