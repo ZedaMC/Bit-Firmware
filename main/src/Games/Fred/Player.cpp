@@ -25,6 +25,12 @@ void Player::inputDirection(Fred::Direction input, bool start){
 	desiredDir = input;
 
 	if(!moving && start){
+		//check if already touching wall in desired direction
+		auto desired = determineNewPositions(obj->getPos(), Speed, desiredDir, 0.05);
+		if(wallCollisionCheck(desired.gridPosition, desiredDir)){
+			return;
+		}
+
 		moving = true;
 		std::static_pointer_cast<AnimRC>(obj->getRenderComponent())->start();
 	}
@@ -73,16 +79,16 @@ Player::PositionSet Player::determineNewPositions(glm::vec2 pos, float speed, Di
 	auto newPos = pos;
 	switch(dir){
 		case Direction::Up:
-			newPos.y -= Speed * deltaT;
+			newPos.y -= speed * deltaT;
 			break;
 		case Direction::Down:
-			newPos.y += Speed * deltaT;
+			newPos.y += speed * deltaT;
 			break;
 		case Direction::Left:
-			newPos.x -= Speed * deltaT;
+			newPos.x -= speed * deltaT;
 			break;
 		case Direction::Right:
-			newPos.x += Speed * deltaT;
+			newPos.x += speed * deltaT;
 			break;
 	}
 
@@ -101,7 +107,7 @@ bool Player::wallCollisionCheck(glm::vec2 gridPos, Direction dir){
 		return true;
 	}
 
-	return FredGame::TileMap[y][x] == FredGame::TileType::Wall;
+	return FredGame::TileMap[y][x] == FredGame::TileType::Wall || FredGame::TileMap[y][x] == FredGame::TileType::Door;
 }
 
 glm::vec2 Player::unsnappedMovement(glm::vec2 gridpos, float deltaT){

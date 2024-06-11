@@ -1,0 +1,10 @@
+#ifndef BIT_FIRMWARE_FOOTSTEPS_H
+#define BIT_FIRMWARE_FOOTSTEPS_H
+
+
+class Footsteps {
+
+};
+
+
+#endif //BIT_FIRMWARE_FOOTSTEPS_H

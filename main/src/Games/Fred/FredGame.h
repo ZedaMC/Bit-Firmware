@@ -31,7 +31,7 @@ private:
 	GameObjPtr border;
 
 	enum class TileType : uint8_t {
-		Wall, Floor, LeftWarp, RightWarp
+		Wall, Floor, LeftWarp, RightWarp, Door
 	};
 	static constexpr const TileType TileMap[GridSize.y][GridSize.x] = {
 			{ TileType::Floor,    TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Wall,  TileType::Wall,  TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor },
@@ -39,7 +39,7 @@ private:
 			{ TileType::Floor,    TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor },
 			{ TileType::Floor,    TileType::Wall,  TileType::Wall,  TileType::Wall,  TileType::Floor, TileType::Wall,  TileType::Wall,  TileType::Floor, TileType::Wall,  TileType::Wall,  TileType::Wall,  TileType::Floor },
 			{ TileType::Floor,    TileType::Wall,  TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Wall,  TileType::Floor },
-			{ TileType::Floor,    TileType::Wall,  TileType::Floor, TileType::Wall,  TileType::Wall,  TileType::Floor, TileType::Floor, TileType::Wall,  TileType::Wall,  TileType::Floor, TileType::Wall,  TileType::Floor },
+			{ TileType::Floor,    TileType::Wall,  TileType::Floor, TileType::Wall,  TileType::Wall,  TileType::Door,  TileType::Door,  TileType::Wall,  TileType::Wall,  TileType::Floor, TileType::Wall,  TileType::Floor },
 			{ TileType::LeftWarp, TileType::Floor, TileType::Floor, TileType::Wall,  TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Wall,  TileType::Floor, TileType::Floor, TileType::RightWarp },
 			{ TileType::Wall,     TileType::Wall,  TileType::Floor, TileType::Wall,  TileType::Wall,  TileType::Wall,  TileType::Wall,  TileType::Wall,  TileType::Wall,  TileType::Floor, TileType::Wall,  TileType::Wall },
 			{ TileType::Wall,     TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Floor, TileType::Wall },

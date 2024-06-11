@@ -47,7 +47,9 @@ void FredGame::onLoad(){
 	);
 	auto anim = std::static_pointer_cast<AnimRC>(playerObj->getRenderComponent());
 	anim->setLoopMode(GIF::Infinite);
+	anim->reset();
 	anim->start();
+	anim->stop();
 	playerObj->setPos(5 * TileSize.x + OutlineSize.x, 8 * TileSize.y + OutlineSize.y);
 
 	addObject(playerObj);
