@@ -62,6 +62,15 @@ private:
 
 	//-------------Player--------------
 	Player player;
+	void initPlayer();
+
+	//---------Level------------------
+	void resetLevel();
+	void setFootsteps();
+	void setPickups();
+
+	GameObjPtr footstepsOriginal;
+	static constexpr uint8_t FootstepCount = 62;
 };
 
 }

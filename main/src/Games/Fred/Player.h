@@ -17,6 +17,8 @@ public:
 
 	void move(float deltaT);
 
+	void reset();
+
 private:
 	Direction dir = Direction::Right;
 	Direction desiredDir = Direction::Right;

@@ -134,3 +134,11 @@ glm::vec2 Player::unsnappedMovement(glm::vec2 gridpos, float deltaT){
 glm::vec2 Player::gridPosition(glm::vec2 position, PixelDim tileSize){
 	return { ((position.x - FredGame::OutlineSize.x) / tileSize.x), ((position.y - FredGame::OutlineSize.y) / tileSize.y) };
 }
+
+void Player::reset(){
+	moving = false;
+	dir = Direction::Right;
+	desiredDir = Direction::Right;
+	obj->setPos(5 * FredGame::TileSize.x + FredGame::OutlineSize.x, 8 * FredGame::TileSize.y + FredGame::OutlineSize.y);
+	std::static_pointer_cast<AnimRC>(obj->getRenderComponent())->stop();
+}

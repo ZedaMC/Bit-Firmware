@@ -7,16 +7,18 @@
 using namespace Fred;
 
 FredGame::FredGame(Sprite& canvas) : Game(canvas, Games::Fred, "/Games/Fred", {
-		{ "/border.raw", {}, true },
-		{ "/floor1.raw", {}, true },
-		{ "/floor2.raw", {}, true },
-		{ "/wall1.raw",  {}, true },
-		{ "/wall2.raw",  {}, true },
-		{ "/wall3.raw",  {}, true },
-		{ "/wall4.raw",  {}, true },
-		{ "/wall5.raw",  {}, true },
-		{ "/wall6.raw",  {}, true },
-		{ "/fred.gif",   {}, false }}){
+		{ "/border.raw",    {}, true },
+		{ "/floor1.raw",    {}, true },
+		{ "/floor2.raw",    {}, true },
+		{ "/wall1.raw",     {}, true },
+		{ "/wall2.raw",     {}, true },
+		{ "/wall3.raw",     {}, true },
+		{ "/wall4.raw",     {}, true },
+		{ "/wall5.raw",     {}, true },
+		{ "/wall6.raw",     {}, true },
+		{ "/door.raw",      {}, true },
+		{ "/fred.gif",      {}, false },
+		{ "/footsteps.raw", {}, true }}){
 
 }
 
@@ -40,20 +42,7 @@ void FredGame::onLoad(){
 
 	setupOriginalTiles();
 	buildTilemap();
-
-	auto playerObj = std::make_shared<GameObject>(
-			std::make_unique<AnimRC>(getFile("/fred.gif")),
-			std::make_unique<RectCC>(glm::vec2{ 10, 10 })
-	);
-	auto anim = std::static_pointer_cast<AnimRC>(playerObj->getRenderComponent());
-	anim->setLoopMode(GIF::Infinite);
-	anim->reset();
-	anim->start();
-	anim->stop();
-	playerObj->setPos(5 * TileSize.x + OutlineSize.x, 8 * TileSize.y + OutlineSize.y);
-
-	addObject(playerObj);
-	player.setObj(playerObj);
+	initPlayer();
 }
 
 void FredGame::onLoop(float deltaTime){
@@ -81,7 +70,7 @@ void FredGame::handleInput(const Input::Data& data){
 			break;
 	}
 }
-
+//IO1 3.3v - 2.7v
 uint32_t FredGame::getXP() const{
 	return 0;
 }
@@ -108,6 +97,11 @@ void FredGame::setupOriginalTiles(){
 		wallObjectsOriginal[i]->setPos(-50, -50);
 		addObject(wallObjectsOriginal[i]);
 	}
+
+	footstepsOriginal = std::make_shared<GameObject>(
+			std::make_unique<AnimRC>(getFile("/footsteps.raw")),
+			nullptr
+	);
 }
 
 void FredGame::buildTilemap(){
@@ -130,6 +124,9 @@ void FredGame::buildTilemap(){
 				case TileType::RightWarp:
 					tile = std::make_shared<GameObject>(std::make_unique<MultiRC>(floorObjectsOriginal[rand() % FloorTypes]->getRenderComponent()), nullptr);
 					break;
+				case TileType::Door:
+					tile = std::make_shared<GameObject>(std::make_unique<StaticRC>(getFile("/door.raw"), TileSize), nullptr);
+					break;
 				default:
 					break;
 			}
@@ -139,4 +136,35 @@ void FredGame::buildTilemap(){
 			tiles[y * GridSize.x + x] = tile;
 		}
 	}
+}
+
+void FredGame::initPlayer(){
+	auto playerObj = std::make_shared<GameObject>(
+			std::make_unique<AnimRC>(getFile("/fred.gif")),
+			std::make_unique<RectCC>(glm::vec2{ 10, 10 })
+	);
+	auto anim = std::static_pointer_cast<AnimRC>(playerObj->getRenderComponent());
+	anim->setLoopMode(GIF::Infinite);
+	anim->reset();
+	anim->start();
+	anim->stop();
+
+
+	addObject(playerObj);
+	player.setObj(playerObj);
+	player.reset();
+}
+
+void FredGame::resetLevel(){
+	player.reset();
+	setFootsteps();
+
+}
+
+void FredGame::setFootsteps(){
+
+}
+
+void FredGame::setPickups(){
+
 }
