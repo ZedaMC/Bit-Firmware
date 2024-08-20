@@ -30,7 +30,7 @@ constexpr AchievementText AchievementTextData[(uint32_t) Achievement::COUNT] = {
 		{ "Firebender",          "Eat a fireball after getting a potion" },
 		{ "Jumper 3",            "Score 1000 points" },
 		{ "Jumper 2",            "Score 500 points" },
-		{ "No mercy",            "Win without letting a single trapped fly escape." },
+		{ "No mercy",            "Win without letting a trapped fly escape." },
 		{ "Yes mercy",           "Lose every trapped fly" },
 		{ "Expert excavator",    "Win without losing a life" },
 		{ "",                    "Lose a battery to a rat" },
@@ -52,7 +52,7 @@ constexpr AchievementText AchievementTextData[(uint32_t) Achievement::COUNT] = {
 		{ "Space guardian 3",    "Score 200 points" },
 		{ "Space guardian 2",    "Score 100 points" },
 		{ "",                    "Win without colliding with an asteroid" },
-		{ "Sharpshooter",        "Don't miss a single shot" },
+		{ "Sharp shooter",        "Don't miss a single shot" },
 		{ "Snaker 1",            "Score 10 points" },
 		{ "Snake pro",           "Reach maximum snake length" },
 		{ "Snaker 3",            "Score 100 points" },
@@ -63,7 +63,7 @@ constexpr AchievementText AchievementTextData[(uint32_t) Achievement::COUNT] = {
 		{ "Architect",           "Get 5 perfect drops in a row" },
 		{ "Highrise",            "Reach a height of 50m" },
 		{ "Skyscraper",          "Reach a height of 100m" },
-		{ "Megastructure",       "Reach a height of 200m" },
+		{ "Mega structure",       "Reach a height of 200m" },
 };
 
 #endif //BIT_FIRMWARE_ACHIEVEMENTTEXTDATA_HPP
