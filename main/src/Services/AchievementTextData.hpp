@@ -2,8 +2,8 @@
 #define BIT_FIRMWARE_ACHIEVEMENTTEXTDATA_HPP
 
 struct AchievementText {
-	const char* Title;
-	const char* Description;
+	const char* title;
+	const char* description;
 };
 
 //TODO - adjust and add descriptions/titles

@@ -18,6 +18,8 @@ LVModal::LVModal(LVScreen* parent) : LVObject((lv_obj_t*) *parent), parentScreen
 
 	inputGroup = lv_group_create();
 
+	parentGroup = InputLVGL::getInstance()->getIndev()->group;
+
 	container = lv_obj_create(*parent);
 	lv_obj_set_parent(*this, container);
 
@@ -41,7 +43,8 @@ LVModal::LVModal(LVScreen* parent) : LVObject((lv_obj_t*) *parent), parentScreen
 }
 
 LVModal::~LVModal(){
-	lv_indev_set_group(InputLVGL::getInstance()->getIndev(), parentScreen->getInputGroup());
+	lv_indev_set_group(InputLVGL::getInstance()->getIndev(), parentGroup);
 	lv_group_del(inputGroup);
 	current = nullptr;
+	parentGroup = nullptr;
 }
