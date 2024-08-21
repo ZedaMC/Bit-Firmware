@@ -12,12 +12,12 @@ namespace WackyStacky {
 class WackyStacky : public Game {
 public:
 	explicit WackyStacky(Sprite& base);
-	virtual ~WackyStacky();
 
 protected:
 	uint32_t getXP() const override;
 	virtual void onLoad() override;
 	virtual void onLoop(float deltaTime) override;
+	void handleInput(const Input::Data& data) override;
 
 private:
 	std::unique_ptr<Score> scoreDisplay;
@@ -25,7 +25,6 @@ private:
 	GameObjPtr hook;
 	GameObjPtr floor;
 	GameObjPtr hookedRobot;
-	EventQueue queue;
 	uint8_t lives = 3;
 	uint8_t currentRobot = 0;
 	uint16_t score = 0;
