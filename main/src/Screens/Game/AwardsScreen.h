@@ -27,7 +27,6 @@ private:
 	uint32_t xp;
 	std::vector<AchievementData> achievements;
 
-	EventQueue evts;
 	Games currentGame;
 
 	Award awardMode = Award::None;
@@ -98,6 +97,16 @@ private:
 	void onStart() override;
 	void onStop() override;
 	void loop() override;
+
+	bool exitFlag = false;
+	void markForExit();
+
+	/**
+	 * Attempt transition to next part of AwardsScreen.
+	 *
+	 * @return true - transition ok, false - exit screen
+	 */
+	bool nextPart();
 
 	void exit();
 };

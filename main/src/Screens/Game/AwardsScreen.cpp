@@ -16,7 +16,7 @@
 #include "Screens/Profile/AchievementView.h"
 
 AwardsScreen::AwardsScreen(Games current, uint32_t highScore, uint32_t xp, std::vector<AchievementData>& achievements) :
-		highScore(highScore), xp(xp), achievements(std::move(achievements)), evts(6), currentGame(current), start(millis()){
+		highScore(highScore), xp(xp), achievements(std::move(achievements)), currentGame(current), start(millis()){
 	const HighScoreManager* hsm = (HighScoreManager*) Services.get(Service::HighScore);
 	if(hsm == nullptr){
 		return;
@@ -34,7 +34,7 @@ AwardsScreen::AwardsScreen(Games current, uint32_t highScore, uint32_t xp, std::
 	}else if(hsm->isHighScore(currentGame, highScore)){
 		setAwardMode(Award::HighScore);
 	}else{
-		exit();
+		markForExit();
 	}
 }
 
@@ -65,7 +65,7 @@ void AwardsScreen::setAwardMode(Award award){
 
 	if(award == Award::LevelUp){
 		chirp->play({{ NOTE_C6, NOTE_C6, 90 },
-					 { 0, 0, 20 },
+					 { 0, 0,             20 },
 					 { NOTE_C6, NOTE_C6, 90 },
 					 { NOTE_G6, NOTE_G6, 200 }});
 	}else if(award == Award::HighScore){
@@ -107,7 +107,7 @@ void AwardsScreen::setAwardMode(Award award){
 		lv_img_set_src(enterImg, "S:/Award/highscore.bin");
 
 		auto label = lv_label_create(rest);
-		lv_label_set_text_fmt(label, "SCORE: %d", (int)highScore);
+		lv_label_set_text_fmt(label, "SCORE: %d", (int) highScore);
 		lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
 		lv_obj_center(label);
 		lv_obj_set_style_text_color(label, lv_color_make(85, 126, 150), 0);
@@ -142,7 +142,44 @@ void AwardsScreen::setAwardMode(Award award){
 		lv_obj_set_style_border_width(name[2], 1, 0);
 		lv_obj_set_style_text_color(name[2], lv_color_make(85, 126, 150), 0);
 
-		InputLVGL::getInstance()->setVertNav(true);
+		lv_obj_add_event_cb(label, [](lv_event_t* e){
+			auto awardsScreen = (AwardsScreen*) e->user_data;
+
+			if(!awardsScreen->nextPart()){
+				awardsScreen->markForExit();
+				return;
+			}
+		}, LV_EVENT_CLICKED, this);
+
+		lv_obj_add_event_cb(label, [](lv_event_t* e){
+			auto awardsScreen = (AwardsScreen*) e->user_data;
+
+			awardsScreen->markForExit();
+		}, LV_EVENT_CANCEL, this);
+
+
+		lv_group_add_obj(inputGroup, label);
+		lv_group_set_editing(inputGroup, true);
+
+		lv_obj_add_event_cb(label, [](lv_event_t* e){
+			auto _this = (AwardsScreen*) e->user_data;
+			auto key = lv_event_get_key(e);
+			if(key == LV_KEY_LEFT){
+				_this->activeIndex = _this->activeIndex == 0 ? 2 : _this->activeIndex - 1;
+			}else if(key == LV_KEY_RIGHT){
+				_this->activeIndex = (_this->activeIndex + 1) % 3;
+			}else if(key == LV_KEY_UP || key == LV_KEY_DOWN){
+				if(key == LV_KEY_UP){
+					_this->characters[_this->activeIndex] = getChar(_this->characters[_this->activeIndex] + 1, 1);
+				}else{
+					_this->characters[_this->activeIndex] = getChar(_this->characters[_this->activeIndex] - 1, -1);
+				}
+
+				for(size_t i = 0; i < 3; ++i){
+					lv_label_set_text(_this->name[i], (std::stringstream() << _this->characters[i]).str().c_str());
+				}
+			}
+		}, LV_EVENT_KEY, this);
 
 	}else if(award == Award::XP){
 		lv_obj_set_style_pad_all(rest, 6, 0);
@@ -190,6 +227,24 @@ void AwardsScreen::setAwardMode(Award award){
 		xpBar->setFill(progress.nextLvl > levelSet + 1 ? 1.0f : progress.progress, true);
 
 		lv_obj_set_align(*xpBar, LV_ALIGN_CENTER);
+
+		lv_obj_add_event_cb(*xpBar, [](lv_event_t* e){
+			auto awardsScreen = (AwardsScreen*) e->user_data;
+
+			if(!awardsScreen->nextPart()){
+				awardsScreen->markForExit();
+				return;
+			}
+		}, LV_EVENT_CLICKED, this);
+
+		lv_obj_add_event_cb(*xpBar, [](lv_event_t* e){
+			auto awardsScreen = (AwardsScreen*) e->user_data;
+
+			awardsScreen->markForExit();
+		}, LV_EVENT_CANCEL, this);
+
+		lv_group_add_obj(inputGroup, *xpBar);
+
 	}else if(award == Award::LevelUp){
 		lv_obj_set_style_pad_all(rest, 6, 0);
 
@@ -229,6 +284,24 @@ void AwardsScreen::setAwardMode(Award award){
 
 		xpBar = new XPBar(XPBarLength::Long, bar, 0.0f);
 		lv_obj_set_align(*xpBar, LV_ALIGN_CENTER);
+
+		lv_obj_add_event_cb(*xpBar, [](lv_event_t* e){
+			auto awardsScreen = (AwardsScreen*) e->user_data;
+
+			if(!awardsScreen->nextPart()){
+				awardsScreen->markForExit();
+				return;
+			}
+		}, LV_EVENT_CLICKED, this);
+
+		lv_obj_add_event_cb(*xpBar, [](lv_event_t* e){
+			auto awardsScreen = (AwardsScreen*) e->user_data;
+
+			awardsScreen->markForExit();
+		}, LV_EVENT_CANCEL, this);
+
+		lv_group_add_obj(inputGroup, *xpBar);
+
 	}else if(award == Award::Achievement){
 		lv_obj_set_style_pad_top(rest, 3, 0);
 
@@ -238,23 +311,24 @@ void AwardsScreen::setAwardMode(Award award){
 
 		lv_group_set_editing(inputGroup, true);
 
-		achView = new AchievementView(rest, 4, 90, 27, achievements);
+		achView = new AchievementView(this, rest, 4, 90, 27, achievements);
+
 		lv_obj_set_pos(*achView, 17, 78);
 
-		lv_group_add_obj(inputGroup, *achView);
 		achView->select();
+		achView->setReturnFunc([this](){
+			if(!nextPart()){
+				markForExit();
+			}
+		});
 	}else{
-		exit();
+		markForExit();
 	}
-
-	lv_group_focus_obj(lv_obj_get_child(rest, 0));
 
 	awardMode = award;
 }
 
 void AwardsScreen::onStart(){
-	Events::listen(Facility::Input, &evts);
-
 	if(awardMode == Award::Achievement){
 		achView->select();
 	}else if(awardMode == Award::HighScore){
@@ -263,7 +337,6 @@ void AwardsScreen::onStart(){
 }
 
 void AwardsScreen::onStop(){
-	Events::unlisten(&evts);
 	InputLVGL::getInstance()->setVertNav(false);
 
 	if(XPSystem* xpSystem = (XPSystem*) Services.get(Service::XPSystem)){
@@ -288,6 +361,12 @@ void AwardsScreen::onStop(){
 }
 
 void AwardsScreen::loop(){
+	if(exitFlag){
+		exitFlag = false;
+		exit();
+		return;
+	}
+
 	const XPSystem* xpSystem = (XPSystem*) Services.get(Service::XPSystem);
 	if(xpSystem == nullptr){
 		return;
@@ -309,53 +388,6 @@ void AwardsScreen::loop(){
 		setAwardMode(Award::LevelUp);
 	}
 
-	HighScoreManager* hsm = (HighScoreManager*) Services.get(Service::HighScore);
-	if(hsm == nullptr){
-		return;
-	}
-
-	for(Event e{}; evts.get(e, 0);){
-		if(e.facility != Facility::Input){
-			free(e.data);
-			continue;
-		}
-
-		auto data = (Input::Data*) e.data;
-		if(data->action == Input::Data::Release){
-			if(data->btn == Input::Menu || data->btn == Input::B){
-				free(e.data);
-				exit();
-				return;
-			}else if(data->btn == Input::A){
-				if(awardMode < Award::Achievement && !achievements.empty()){
-					setAwardMode(Award::Achievement);
-				}else if(awardMode < Award::HighScore && hsm->isHighScore(currentGame, highScore)){
-					setAwardMode(Award::HighScore);
-				}else{
-					free(e.data);
-					exit();
-					return;
-				}
-			}else if(data->btn == Input::Up){
-				labelChanged = 0;
-			}else if(data->btn == Input::Down){
-				labelChanged = 0;
-			}else if(data->btn == Input::Left){
-				activeIndex = activeIndex == 0 ? 2 : activeIndex - 1;
-			}else if(data->btn == Input::Right){
-				activeIndex = (activeIndex + 1) % 3;
-			}
-		}else{
-			if(data->btn == Input::Up){
-				labelChanged = 1;
-			}else if(data->btn == Input::Down){
-				labelChanged = -1;
-			}
-		}
-
-		free(e.data);
-	}
-
 	if(awardMode == Award::HighScore){
 		const uint64_t interval = (millis() - start) / blinkTime;
 
@@ -370,22 +402,6 @@ void AwardsScreen::loop(){
 				}else{
 					lv_obj_set_style_border_opa(name[i], 0, 0);
 				}
-			}
-		}
-
-		if(labelChanged != 0){
-			if(millis() - lastChanged >= 200){
-				if(labelChanged > 0){
-					characters[activeIndex] = getChar(characters[activeIndex] + 1, 1);
-				}else{
-					characters[activeIndex] = getChar(characters[activeIndex] - 1, -1);
-				}
-
-				lastChanged = millis();
-			}
-
-			for(size_t i = 0; i < 3; ++i){
-				lv_label_set_text(name[i], (std::stringstream() << characters[i]).str().c_str());
 			}
 		}
 	}
@@ -407,4 +423,26 @@ void AwardsScreen::exit(){
 	}else{
 		ui->startScreen([this](){ return std::make_unique<GameMenuScreen>(currentGame); });
 	}
+}
+
+bool AwardsScreen::nextPart(){
+	HighScoreManager* hsm = (HighScoreManager*) Services.get(Service::HighScore);
+	if(hsm == nullptr){
+		return false;
+	}
+
+
+	if(awardMode < Award::Achievement && !achievements.empty()){
+		setAwardMode(Award::Achievement);
+	}else if(awardMode < Award::HighScore && hsm->isHighScore(currentGame, highScore)){
+		setAwardMode(Award::HighScore);
+	}else{
+		return false;
+	}
+
+	return true;
+}
+
+void AwardsScreen::markForExit(){
+	exitFlag = true;
 }

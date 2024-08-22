@@ -4,16 +4,20 @@
 #include "Services/AchievementTextData.hpp"
 #include "../GrayscaleImageElement.h"
 #include "Util/Services.h"
+#include "AchievementPopup.h"
+#include "LV_Interface/LVScreen.h"
+#include "Modals/LockedGame.h"
+#include "LV_Interface/InputLVGL.h"
 
-AchievementView::AchievementView(lv_obj_t* parent, uint8_t rows, uint16_t width, uint16_t height, std::vector<AchievementData>& unlockedData) :
-		LVSelectable(parent), RowWidth(rows), width(width), height(height), achievementsVector(std::move(unlockedData)){
+AchievementView::AchievementView(LVScreen* screen, lv_obj_t* parent, uint8_t rows, uint16_t width, uint16_t height, std::vector<AchievementData>& unlockedData) :
+		LVSelectable(parent), RowWidth(rows), width(width), height(height), achievementsVector(std::move(unlockedData)), parentScreen(screen){
 
 	initStyles();
 	buildUI();
 }
 
-AchievementView::AchievementView(lv_obj_t* parent, uint8_t rows, uint16_t width, uint16_t height) :
-		LVSelectable(parent), RowWidth(rows), width(width), height(height){
+AchievementView::AchievementView(LVScreen* screen, lv_obj_t* parent, uint8_t rows, uint16_t width, uint16_t height) :
+		LVSelectable(parent), RowWidth(rows), width(width), height(height), parentScreen(screen){
 	auto achievementSystem = (AchievementSystem*) Services.get(Service::Achievements);
 	achievementSystem->getAll(achievementsVector);
 
@@ -105,6 +109,12 @@ void AchievementView::buildUI(){
 		lv_obj_add_event_cb(base, [](lv_event_t* e){
 			lv_obj_set_style_bg_img_src(lv_event_get_target(e), "S:/Ach/bg.bin", LV_STATE_FOCUSED);
 		}, LV_EVENT_DEFOCUSED, nullptr);
+
+		lv_obj_add_event_cb(base, [](lv_event_t* e){
+			auto achView = (AchievementView*) e->user_data;
+			auto index = lv_obj_get_index(e->current_target);
+			new AchievementPopup(achView->parentScreen, achView->achievementsVector[index]);
+		}, LV_EVENT_CLICKED, this);
 	}
 }
 
@@ -122,4 +132,13 @@ void AchievementView::onDeselect(){
 
 void AchievementView::setReturnFunc(std::function<void()> returnFunc){
 	this->returnFunc = returnFunc;
+}
+
+bool AchievementView::popupActive() const{
+	auto currGroup = InputLVGL::getInstance()->getIndev()->group;
+	if(!isActive()) return false;
+
+	if(currGroup != inputGroup) return true;
+
+	return false;
 }

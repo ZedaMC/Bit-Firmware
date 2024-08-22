@@ -8,9 +8,11 @@
 
 class AchievementView : public LVSelectable {
 public:
-	AchievementView(lv_obj_t* parent, uint8_t rows, uint16_t width, uint16_t height, std::vector<AchievementData>& unlockedData);
-	AchievementView(lv_obj_t* parent, uint8_t rows, uint16_t width, uint16_t height);
+	AchievementView(class LVScreen* parentScreen, lv_obj_t* parent, uint8_t rows, uint16_t width, uint16_t height, std::vector<AchievementData>& unlockedData);
+	AchievementView(class LVScreen* parentScreen, lv_obj_t* parent, uint8_t rows, uint16_t width, uint16_t height);
 	void setReturnFunc(std::function<void()> returnFunc);
+
+	bool popupActive() const;
 
 protected:
 	void onSelect() override;
@@ -23,9 +25,11 @@ private:
 
 	LVStyle defaultStyle;
 
-	std::function<void()> returnFunc;
+	std::function<void()> returnFunc = {};
 
 	std::vector<AchievementData> achievementsVector;
+
+	LVScreen* parentScreen = nullptr;
 
 	void initStyles();
 	void buildUI();
