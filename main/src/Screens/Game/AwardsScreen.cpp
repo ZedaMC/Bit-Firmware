@@ -14,6 +14,7 @@
 #include "Settings/Settings.h"
 #include "Filepaths.hpp"
 #include "Screens/Profile/AchievementView.h"
+#include "Services/BacklightBrightness.h"
 
 AwardsScreen::AwardsScreen(Games current, uint32_t highScore, uint32_t xp, std::vector<AchievementData>& achievements) :
 		highScore(highScore), xp(xp), achievements(std::move(achievements)), evts(6), currentGame(current), start(millis()){
@@ -403,8 +404,18 @@ void AwardsScreen::exit(){
 	}
 
 	if(hsm->isHighScore(currentGame, highScore)){
-		ui->startScreen([this](){ return std::make_unique<HighScoreScreen>(currentGame); });
+		ui->startScreen([this](){ return std::make_unique<HighScoreScreen>(currentGame); }, true);
 	}else{
-		ui->startScreen([this](){ return std::make_unique<GameMenuScreen>(currentGame); });
+		auto settings = (Settings*) Services.get(Service::Settings);
+		auto set = settings->get();
+		set.gameStart = (int) currentGame + 1;
+		set.gameExit = true;
+		settings->set(set);
+		settings->store();
+
+		auto bl = (BacklightBrightness*) Services.get(Service::Backlight);
+		bl->fadeOut();
+		delayMillis(500);
+		esp_restart();
 	}
 }

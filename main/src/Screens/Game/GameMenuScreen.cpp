@@ -11,6 +11,8 @@
 #include "GameSplashScreen.h"
 #include "Services/TwinkleService.h"
 #include "Devices/SinglePwmLED.h"
+#include "Services/BacklightBrightness.h"
+#include "Util/stdafx.h"
 
 GameMenuScreen::GameMenuScreen(Games current) : evts(6), currentGame(current){
 	switch(currentGame){
@@ -168,9 +170,16 @@ void GameMenuScreen::buildUI(){
 			}
 			screen->addUsedLEDs();
 
-			if(auto ui = (UIThread*) Services.get(Service::UI)){
-				ui->startScreen([screen](){ return std::make_unique<InstructionsScreen>(screen->currentGame, true); });
-			}
+			auto settings = (Settings*) Services.get(Service::Settings);
+			auto set = settings->get();
+			set.gameStart = (int) screen->currentGame + 1;
+			settings->set(set);
+			settings->store();
+
+			auto bl = (BacklightBrightness*) Services.get(Service::Backlight);
+			bl->fadeOut();
+			delayMillis(500);
+			esp_restart();
 		}, e->user_data);
 	}, LV_EVENT_PRESSED, this);
 

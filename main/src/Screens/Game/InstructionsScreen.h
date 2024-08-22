@@ -31,6 +31,8 @@ private:
 	void exit();
 
 	bool launch;
+	uint32_t startTime;
+
 };
 
 #endif //BIT_FIRMWARE_INSTRUCTIONSSCREEN_H

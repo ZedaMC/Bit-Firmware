@@ -13,7 +13,7 @@ public:
 	~UIThread() override;
 
 	void startGame(Games game);
-	void startScreen(std::function<std::unique_ptr<LVScreen>()> create);
+	void startScreen(std::function<std::unique_ptr<LVScreen>()> create, bool skipCache = false);
 
 	void pauseGame();
 	void resumeGame();

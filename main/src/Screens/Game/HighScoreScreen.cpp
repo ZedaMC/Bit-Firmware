@@ -9,6 +9,8 @@
 #include "Services/HighScoreManager.h"
 #include "Settings/Settings.h"
 #include "Filepaths.hpp"
+#include "Services/BacklightBrightness.h"
+#include "Util/stdafx.h"
 
 HighScoreScreen::HighScoreScreen(Games current) : evts(6), currentGame(current){
 	Input* input = (Input*) Services.get(Service::Input);
@@ -220,6 +222,15 @@ void HighScoreScreen::loop(){
 }
 
 void HighScoreScreen::exit(){
-	auto ui = (UIThread*) Services.get(Service::UI);
-	ui->startScreen([this](){ return std::make_unique<GameMenuScreen>(currentGame); });
+	auto settings = (Settings*) Services.get(Service::Settings);
+	auto set = settings->get();
+	set.gameStart = (int) currentGame + 1;
+	set.gameExit = true;
+	settings->set(set);
+	settings->store();
+
+	auto bl = (BacklightBrightness*) Services.get(Service::Backlight);
+	bl->fadeOut();
+	delayMillis(500);
+	esp_restart();
 }

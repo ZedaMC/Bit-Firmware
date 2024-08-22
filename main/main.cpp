@@ -33,6 +33,8 @@
 #include "driver/rtc_io.h"
 #include "Services/LEDService/LEDService.h"
 #include "Services/TwinkleService.h"
+#include "Screens/Game/InstructionsScreen.h"
+#include "Screens/Game/GameMenuScreen.h"
 
 BacklightBrightness* bl;
 
@@ -89,6 +91,14 @@ void init(){
 	auto settings = new Settings();
 	Services.set(Service::Settings, settings);
 
+	const Games game = settings->get().gameStart == 0 ? Games::COUNT : (Games) (settings->get().gameStart-1);
+	const bool gameExit = settings->get().gameExit;
+	auto set = settings->get();
+	set.gameStart = 0;
+	set.gameExit = false;
+	settings->set(set);
+	settings->store();
+
 	if(JigHWTest::checkJig()){
 		printf("Jig\n");
 
@@ -100,12 +110,6 @@ void init(){
 		test->start();
 		vTaskDelete(nullptr);
 	}
-
-	auto xpsystem = new XPSystem();
-	Services.set(Service::XPSystem, xpsystem);
-
-	auto achievements = new AchievementSystem();
-	Services.set(Service::Achievements, achievements);
 
 	auto blPwm = new PWM(PIN_BL, LEDC_CHANNEL_1, true);
 	blPwm->detach();
@@ -125,15 +129,17 @@ void init(){
 
 	TwinkleService* twinkleService = new TwinkleService();
 	Services.set(Service::Twinkle, twinkleService);
-	twinkleService->start();
 
 	if(!initSPIFFS()) return;
 
 	auto disp = new Display();
 	Services.set(Service::Display, disp);
 
-	disp->getLGFX().drawBmpFile(Filepath::Splash, 36, 11);
-	bl->fadeIn();
+	if(game == Games::COUNT || gameExit){
+		twinkleService->start();
+		disp->getLGFX().drawBmpFile(Filepath::Splash, 36, 11);
+		bl->fadeIn();
+	}
 	auto splashStart = millis();
 
 	auto buzzPwm = new PWM(PIN_BUZZ, LEDC_CHANNEL_0);
@@ -150,8 +156,12 @@ void init(){
 	Services.set(Service::RobotManager, games);
 	auto highScore = new HighScoreManager();
 	Services.set(Service::HighScore, highScore);
-	auto rob = new Robots();
-	Services.set(Service::Robots, rob);
+
+	auto xpsystem = new XPSystem();
+	Services.set(Service::XPSystem, xpsystem);
+
+	auto achievements = new AchievementSystem();
+	Services.set(Service::Achievements, achievements);
 
 	auto lvgl = new LVGL(*disp);
 	auto lvInput = new InputLVGL();
@@ -159,7 +169,18 @@ void init(){
 
 	auto gamer = new GameRunner(*disp);
 
-	if(settings->get().sound){
+	auto ui = new UIThread(*lvgl, *gamer);
+	Services.set(Service::UI, ui);
+
+	if(game != Games::COUNT && !gameExit){
+		ui->startScreen([game](){ return std::make_unique<InstructionsScreen>(game, true); }, true);
+		ui->start();
+		bl->fadeIn();
+		battery->begin();
+		return;
+	}
+
+	if(settings->get().sound && !gameExit){
 		audio->play({
 				Chirp { NOTE_D4, NOTE_A4, 100 },
 				Chirp { 0, 0, 50 },
@@ -174,11 +195,21 @@ void init(){
 		});
 	}
 
+	// GameManager before robot detector, in case robot is plugged in during boot
+	auto games = new RobotManager();
+	Services.set(Service::RobotManager, games);
+	auto rob = new Robots();
+	Services.set(Service::Robots, rob);
+
 	FSLVGL::loadArchives();
 	FSLVGL::loadCache();
 
-	auto ui = new UIThread(*lvgl, *gamer);
-	Services.set(Service::UI, ui);
+	if(gameExit){
+		ui->startScreen([game](){ return std::make_unique<GameMenuScreen>(game); });
+		ui->start();
+		battery->begin();
+		return;
+	}
 
 	while(millis() - splashStart < 2000){
 		delayMillis(10);

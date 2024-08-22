@@ -10,6 +10,9 @@
 #include "Screens/Game/AwardsScreen.h"
 #include "Services/LEDService/LEDService.h"
 #include "Devices/SinglePwmLED.h"
+#include "Services/BacklightBrightness.h"
+#include "Services/TwinkleService.h"
+#include "Util/stdafx.h"
 
 Game::Game(Sprite& base, Games gameType, const char* root, std::vector<ResDescriptor> resources) :
 		collision(this), inputQueue(12), audio(*(ChirpSystem*) Services.get(Service::Audio)), gameType(gameType), base(base),
@@ -168,13 +171,21 @@ void Game::exit(){
 	const Games type = getType();
 
 	if(hsm->isHighScore(type, score) || xp != 0 || !achievements.empty()){
-		ui->startScreen([type, score, xp, &achievements](){ return std::make_unique<AwardsScreen>(type, score, xp, achievements); });
+		ui->startScreen([type, score, xp, &achievements](){ return std::make_unique<AwardsScreen>(type, score, xp, achievements); }, true);
 		return;
 	}
 
-	ui->startScreen([type](){
-		return std::make_unique<GameMenuScreen>(type);
-	});
+	auto settings = (Settings*) Services.get(Service::Settings);
+	auto set = settings->get();
+	set.gameStart = (int) type + 1;
+	set.gameExit = true;
+	settings->set(set);
+	settings->store();
+
+	auto bl = (BacklightBrightness*) Services.get(Service::Backlight);
+	bl->fadeOut();
+	delayMillis(500);
+	esp_restart();
 }
 
 void Game::loop(uint micros){

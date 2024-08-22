@@ -52,6 +52,8 @@ void InstructionsScreen::onStart(){
 		Events::listen(Facility::Input, &evts);
 		InputLVGL::getInstance()->setVertNav(true);
 	}
+
+	startTime = millis();
 }
 
 void InstructionsScreen::onStop(){
@@ -60,7 +62,7 @@ void InstructionsScreen::onStop(){
 }
 
 void InstructionsScreen::loop(){
-	if(launch){
+	if(launch && millis() - startTime > LV_DISP_DEF_REFR_PERIOD*2){
 		if(auto ui = (UIThread*) Services.get(Service::UI)){
 			ui->startGame(currentGame);
 		}

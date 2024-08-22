@@ -34,9 +34,11 @@ void UIThread::startGame(Games game){
 	active = Src::Game;
 }
 
-void UIThread::startScreen(std::function<std::unique_ptr<LVScreen>()> create){
+void UIThread::startScreen(std::function<std::unique_ptr<LVScreen>()> create, bool skipCache){
 	gamer.endGame();
-	FSLVGL::loadCache();
+	if(!skipCache){
+		FSLVGL::loadCache();
+	}
 	lvgl.startScreen(std::move(create));
 	active = Src::LVGL;
 }

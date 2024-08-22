@@ -66,6 +66,8 @@ struct SettingsStruct {
 	Theme theme = Theme::Theme1;
 	uint8_t avatar = 0;
 	int8_t pet = -1;
+	uint8_t gameStart = 0;
+	bool gameExit = false;
 };
 
 class Settings {
