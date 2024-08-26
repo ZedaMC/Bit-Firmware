@@ -104,6 +104,10 @@ void Flappy::onLoop(float deltaTime){
 			obstacle.passed = true;
 			scoreDisplay->setScore(score);
 
+			setAchiIfBigger(Achievement::Bee_b, score);
+			setAchiIfBigger(Achievement::Bee_g, score);
+			setAchiIfBigger(Achievement::Bee_s, score);
+
 			speedX += 1;
 		}
 	}

@@ -1,12 +1,12 @@
 #ifndef BIT_FIRMWARE_CAPACITRON_H
 #define BIT_FIRMWARE_CAPACITRON_H
 
-#include "Devices/LEDController.h"
 #include "RobotDriver.h"
+#include "LEDService/RoboLEDService.h"
 
 namespace RoboCtrl {
 
-class Capacitron : public RobotDriver{
+class Capacitron : public RobotDriver {
 public:
 	Capacitron();
 	virtual ~Capacitron();
@@ -23,8 +23,7 @@ protected:
 	void deinit() override;
 
 private:
-	DigitalLEDController led1;
-	DigitalLEDController led2;
+	RoboLEDService ledService;
 
 	bool leftRightAnim = false;
 	uint32_t leftRightTime = 0;

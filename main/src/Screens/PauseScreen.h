@@ -15,10 +15,11 @@ public:
 	PauseScreen(Games current);
 
 private:
+	enum class State {
+		Pause, Controls, IgnoreInput
+	} state = State::Pause;
 	EventQueue evts;
 	Games currentGame;
-
-	BatteryElement* batt;
 
 	LVStyle itemStyle;
 	LVStyle focusStyle;
@@ -33,6 +34,7 @@ private:
 	void loop() override;
 
 	void showControls();
+	void exitControls();
 	void exit();
 };
 

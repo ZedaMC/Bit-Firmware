@@ -3,7 +3,7 @@
 
 #include "RobotDriver.h"
 #include "Periph/PinOut.h"
-#include "Devices/LEDController.h"
+#include "LEDService/RoboLEDService.h"
 
 namespace RoboCtrl {
 
@@ -21,7 +21,7 @@ protected:
 	void deinit() override;
 
 private:
-	DigitalLEDController led;
+	RoboLEDService ledService;
 };
 
 }

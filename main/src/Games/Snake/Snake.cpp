@@ -277,6 +277,8 @@ void Snake::foodEaten(bool initial){
 		scoreElement->setScore(++score);
 		addSegment();
 
+		checkAchi();
+
 		if(score >= GridDim.x * GridDim.y){
 			gameWinCounter = 0;
 			audio.stop();
@@ -319,4 +321,14 @@ void Snake::foodEaten(bool initial){
 	pos -= ((Foods[foodIndex].dim - TileDim) / (short) 2);
 	food->setPos(pos);
 
+}
+
+void Snake::checkAchi(){
+	setAchiIfBigger(Achievement::Snake_b, score);
+	setAchiIfBigger(Achievement::Snake_s, score);
+	setAchiIfBigger(Achievement::Snake_g, score);
+
+	if(score >= GridDim.x * GridDim.y - 20){
+		setAchiIfBigger(Achievement::Snake_fill, 1);
+	}
 }
