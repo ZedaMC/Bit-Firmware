@@ -61,15 +61,6 @@ MainMenu::~MainMenu(){
 
 void MainMenu::launch(Games game){
 	auto games = (RobotManager*) Services.get(Service::RobotManager);
-	if(!games->isUnlocked(game)){
-		auto audio = (ChirpSystem*) Services.get(Service::Audio);
-		audio->play({ { 300, 300, 50 },
-					  { 0,   0,   50 },
-					  { 200, 200, 250 } });
-		const auto rob = RobotManager::GameRobot.at(game);
-		new LockedGame(this, rob);
-		return;
-	}
 
 	auto ui = (UIThread*) Services.get(Service::UI);
 	ui->startScreen([game](){ return std::make_unique<GameSplashScreen>(game); });
@@ -185,11 +176,7 @@ void MainMenu::handleGameInsert(const RobotManager::Event& evt){
 		return;
 	}
 
-	if(isNew && robGames.count(rob.robot >= Robot::COUNT ? (uint8_t) Robot::COUNT + (uint8_t) rob.token : (uint8_t) rob.robot)){
-		FSLVGL::reloadMenu();
-		MenuItem* item = robGames.at(rob.robot >= Robot::COUNT ? (uint8_t) Robot::COUNT + (uint8_t) rob.token : (uint8_t) rob.robot);
-		item->setLocked(false);
-	}
+        item->setLocked(false);
 
 	new NewRobot(this, rob, isNew);
 }
@@ -360,10 +347,7 @@ void MainMenu::buildUI(){
 	for(const auto& entry : MenuEntries){
 		const std::string path = imgFullPath(entry.icon);
 		const std::string pathGrayscale = imgGrayscalePath(entry.icon);
-		bool locked = true;
-		if((entry.rob.robot == Robot::COUNT && entry.rob.token == Token::COUNT) || entry.game == Games::COUNT || games->isUnlocked(entry.game)){
-			locked = false;
-		}
+		bool locked = false;
 
 		auto item = new MenuItem(itemCont, path, pathGrayscale, locked);
 		lv_obj_add_flag(*item, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
